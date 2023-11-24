@@ -11,7 +11,7 @@ update logging from python to feishu table. You can check your printed content f
 
 - BaseOpenSDK for feishu(Python)
 
-具体官方文档参见https://bytedance.larkoffice.com/wiki/E95iw3QohiOOolkjmXwcVsC5nae。但不是很详细，我已在pythonFeishuConnector.py中把主要的方法都封装实现了。
+具体官方文档参见https://bytedance.larkoffice.com/wiki/E95iw3QohiOOolkjmXwcVsC5nae   。但不是很详细，我已在pythonFeishuConnector.py中把主要的方法都封装实现了。
 
 ### 2.logging
 
