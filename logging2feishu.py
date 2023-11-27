@@ -3,6 +3,7 @@ from logging.handlers import RotatingFileHandler
 import feishuConnector as FS
 import time
 import threading
+import json
 from multiprocessing import Process
 CRITICAL = 50
 FATAL = CRITICAL
@@ -35,6 +36,7 @@ _nameToLevel = {
 class LoggerThread(logging.Logger,threading.Thread):
 
     def __init__(self, name, local_level='DEBUG', file=None, encoding='utf-8',updateInterval=90,
+                 config_file=None,
                  feishu_level='DEBUG',feishu_app_token='',feishu_personal_base_token='',print_table_id=None,history_table_id=None):
         TT=threading.Thread
         TT.__init__(self,)
@@ -47,14 +49,25 @@ class LoggerThread(logging.Logger,threading.Thread):
         self.loggerInit()
         # feishu init
         retainHistoryNums=500
-        if len(feishu_app_token)>0 and len(feishu_personal_base_token)>0 and len(print_table_id)>0:
+        if config_file is not None:
+            config=read_config(config_file)
+            try:
+                self.historyTableID=config['feishu_history_table_id']
+            except:
+                self.historyTableID=None
+            self.feishu_personal_base_token=config['feishu_personal_base_token']
+            self.feishu_app_token=config['feishu_app_token']
+            self.printTableID=config['feishu_table_id']
+            FS.clearTableRecords(self.printTableID,self.feishu_app_token,self.feishu_personal_base_token,0)
+        elif len(feishu_app_token)>0 and len(feishu_personal_base_token)>0 and len(print_table_id)>0:
             self.printTableID=print_table_id
             self.historyTableID=history_table_id
             self.feishu_personal_base_token=feishu_personal_base_token
             self.feishu_app_token=feishu_app_token
+        
             FS.clearTableRecords(self.printTableID,self.feishu_app_token,self.feishu_personal_base_token,0)
-            if self.historyTableID is not None:
-                FS.clearTableRecords(self.historyTableID,self.feishu_app_token,self.feishu_personal_base_token,retainHistoryNums)
+        if self.historyTableID is not None:
+            FS.clearTableRecords(self.historyTableID,self.feishu_app_token,self.feishu_personal_base_token,retainHistoryNums)
         
         
         # interval update to feishu
@@ -195,22 +208,27 @@ class LoggerThread(logging.Logger,threading.Thread):
 
     fatal = critical
 
+def read_config(config_file):
+    """"读取配置"""
+    with open(config_file) as json_file:
+        config = json.load(json_file)
+    return config
+
 def Logger(name, local_level='DEBUG', file=None, encoding='utf-8',updateInterval=90,
+           config_file=None,
             feishu_level='INFO',feishu_app_token='',feishu_personal_base_token='',print_table_id='',history_table_id=''):
     log = LoggerThread(name, local_level,file,encoding,updateInterval,
-                        feishu_level,feishu_app_token,feishu_personal_base_token,print_table_id,history_table_id)
+                       config_file,
+                       feishu_level,feishu_app_token,feishu_personal_base_token,print_table_id,history_table_id)
     
     log.start()
     return log
 
 
 if __name__=='__main__':
-    app_token='H2zYbWPAaaL6dosbQmscDybPnpo'
-    base_token='pt-XnQYlq2Bc1_Nz29o8ZX4Ks5IvGxf4LDyYXe-XmWLAQAAA4CB3wKAwrLiVB_6'
-    table_id='tblEhWjCKkJwVvmz'
-    h_table_id='tblaC2SzfQMTRzPt'
+    
     l = Logger(name='haha', file='test2.log',updateInterval=20,
-            feishu_app_token=app_token,feishu_personal_base_token=base_token,print_table_id=table_id,history_table_id=h_table_id)
+            config_file='config.json')
     
     l.debug('1111111info level是qqqqqq12sdf3')
     time.sleep(2)
